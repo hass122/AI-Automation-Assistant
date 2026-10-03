@@ -1,32 +1,36 @@
 import os
 import logging
+
 from flask import Flask, render_template, request, jsonify
 
-# ---------------------------------------------------------
-# Flask App
-# ---------------------------------------------------------
+
+# =========================================================
+# Flask Application
+# =========================================================
 
 app = Flask(__name__)
 
-# Secret key (optional for current app, but useful for Flask)
+# Optional secret key
 app.secret_key = os.getenv("SECRET_KEY", "dev-secret-key")
 
-# ---------------------------------------------------------
+
+# =========================================================
 # Logging
-# ---------------------------------------------------------
+# =========================================================
 
 logging.basicConfig(level=logging.INFO)
+
 logger = logging.getLogger(__name__)
 
 
-# ---------------------------------------------------------
+# =========================================================
 # Health Check
-# ---------------------------------------------------------
+# =========================================================
 
 @app.route("/health", methods=["GET"])
 def health():
     """
-    Simple health-check endpoint for Vercel.
+    Health-check endpoint for Vercel.
     """
 
     return jsonify({
@@ -35,9 +39,9 @@ def health():
     }), 200
 
 
-# ---------------------------------------------------------
-# Home / Main Application
-# ---------------------------------------------------------
+# =========================================================
+# Home Page
+# =========================================================
 
 @app.route("/", methods=["GET", "POST"])
 def index():
@@ -47,17 +51,17 @@ def index():
     message = ""
     message_type = ""
 
-    # -----------------------------------------------------
+    # =====================================================
     # POST Request
-    # -----------------------------------------------------
+    # =====================================================
 
     if request.method == "POST":
 
         keyword = request.form.get("keyword", "").strip()
 
-        # ---------------------------------------------
+        # -------------------------------------------------
         # Validate keyword
-        # ---------------------------------------------
+        # -------------------------------------------------
 
         if not keyword:
 
@@ -69,22 +73,38 @@ def index():
             try:
 
                 logger.info(
-                    "Automation request received for keyword: %s",
+                    "Automation request received. Keyword: %s",
                     keyword
                 )
 
-                # -----------------------------------------
-                # Import project modules
-                # -----------------------------------------
+                # =================================================
+                # Import Project Modules
+                # =================================================
+                #
+                # IMPORTANT:
+                # These files are located in the ROOT directory
+                # of your GitHub repository.
+                #
+                # api_client.py
+                # analyzer.py
+                # selenium_bot.py
+                # report.py
+                #
+                # Therefore we DO NOT use:
+                # api.api_client
+                # ai.analyzer
+                # automation.selenium_bot
+                # utils.report
+                # =================================================
 
-                from api.api_client import fetch_demo_jobs
-                from ai.analyzer import analyze_jobs
+                from api_client import fetch_demo_jobs
+                from analyzer import analyze_jobs
 
-                # -----------------------------------------
-                # Fetch demo jobs
-                # -----------------------------------------
+                # =================================================
+                # Fetch Jobs
+                # =================================================
 
-                logger.info("Fetching demo jobs...")
+                logger.info("Fetching jobs...")
 
                 jobs = fetch_demo_jobs()
 
@@ -92,16 +112,16 @@ def index():
                     jobs = []
 
                 logger.info(
-                    "Fetched %s jobs",
+                    "Jobs fetched: %s",
                     len(jobs)
                 )
 
-                # -----------------------------------------
-                # Analyze jobs
-                # -----------------------------------------
+                # =================================================
+                # Analyze Jobs
+                # =================================================
 
                 logger.info(
-                    "Analyzing jobs using keyword: %s",
+                    "Analyzing jobs for keyword: %s",
                     keyword
                 )
 
@@ -113,15 +133,18 @@ def index():
                 if analyzed is None:
                     analyzed = []
 
-                # -----------------------------------------
-                # Calculate statistics
-                # -----------------------------------------
+                # =================================================
+                # Calculate Match Statistics
+                # =================================================
 
                 high_count = 0
                 medium_count = 0
                 low_count = 0
 
                 for item in analyzed:
+
+                    if not isinstance(item, dict):
+                        continue
 
                     match_level = item.get(
                         "match",
@@ -137,25 +160,22 @@ def index():
                     elif match_level == "Low":
                         low_count += 1
 
-                # -----------------------------------------
-                # Selenium
-                # -----------------------------------------
+                # =================================================
+                # Selenium Automation
+                # =================================================
                 #
-                # Selenium may not work on Vercel's
-                # serverless environment because a browser
+                # Selenium may not work properly on Vercel
+                # Serverless Functions because Chrome/browser
                 # runtime may not be available.
                 #
-                # Therefore Selenium failure should NOT
-                # destroy the complete application.
-                # -----------------------------------------
+                # Therefore Selenium errors are handled separately.
+                # =================================================
 
                 selenium_result = None
 
                 try:
 
-                    from automation.selenium_bot import (
-                        run_selenium_demo
-                    )
+                    from selenium_bot import run_selenium_demo
 
                     logger.info(
                         "Starting Selenium automation..."
@@ -183,20 +203,19 @@ def index():
                         )
                     }
 
-                # -----------------------------------------
-                # Save Report
-                # -----------------------------------------
+                # =================================================
+                # Generate Report
+                # =================================================
                 #
-                # Report generation can also fail in a
-                # serverless environment if it attempts
-                # to write to a permanent local directory.
-                # -----------------------------------------
+                # Report generation is also handled separately
+                # because Vercel has temporary filesystem storage.
+                # =================================================
 
                 report_path = None
 
                 try:
 
-                    from utils.report import save_report
+                    from report import save_report
 
                     logger.info(
                         "Generating report..."
@@ -226,9 +245,9 @@ def index():
                         )
                     }
 
-                # -----------------------------------------
+                # =================================================
                 # Final Results
-                # -----------------------------------------
+                # =================================================
 
                 results = {
                     "jobs": analyzed,
@@ -237,7 +256,7 @@ def index():
                     "total": len(analyzed),
                     "high": high_count,
                     "medium": medium_count,
-                    "low": low_count,
+                    "low": low_count
                 }
 
                 message = (
@@ -251,9 +270,9 @@ def index():
                     "Automation request completed successfully."
                 )
 
-            # ---------------------------------------------
+            # =====================================================
             # General Application Error
-            # ---------------------------------------------
+            # =====================================================
 
             except Exception as error:
 
@@ -268,9 +287,9 @@ def index():
 
                 message_type = "error"
 
-    # -----------------------------------------------------
-    # Render Page
-    # -----------------------------------------------------
+    # =========================================================
+    # Render Template
+    # =========================================================
 
     try:
 
@@ -279,7 +298,7 @@ def index():
             results=results,
             keyword=keyword,
             message=message,
-            message_type=message_type,
+            message_type=message_type
         )
 
     except Exception as template_error:
@@ -288,36 +307,48 @@ def index():
             "Template rendering failed."
         )
 
-        # This response helps identify template problems
-        # instead of returning a generic Vercel 500 page.
-
         return (
             f"""
-            <h1>AI Automation Assistant</h1>
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>AI Automation Assistant</title>
+                <meta charset="UTF-8">
+            </head>
 
-            <h2>Template Error</h2>
+            <body>
 
-            <p>
-                {type(template_error).__name__}:
-                {template_error}
-            </p>
+                <h1>AI Automation Assistant</h1>
 
-            <p>
-                Make sure your project contains:
-            </p>
+                <h2>Template Error</h2>
 
-            <pre>
+                <p>
+                    <strong>
+                        {type(template_error).__name__}
+                    </strong>
+                    :
+                    {template_error}
+                </p>
+
+                <p>
+                    Make sure this file exists:
+                </p>
+
+                <pre>
 templates/
     index.html
-            </pre>
+                </pre>
+
+            </body>
+            </html>
             """,
-            500,
+            500
         )
 
 
-# ---------------------------------------------------------
-# Vercel / Production Entry Point
-# ---------------------------------------------------------
+# =========================================================
+# Vercel / Local Development
+# =========================================================
 
 if __name__ == "__main__":
 
@@ -331,5 +362,5 @@ if __name__ == "__main__":
     app.run(
         host="0.0.0.0",
         port=port,
-        debug=False,
+        debug=False
     )
