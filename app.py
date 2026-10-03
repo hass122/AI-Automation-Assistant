@@ -1,11 +1,11 @@
 import os
 from flask import Flask, render_template, request
-from api.api_client import fetch_demo_jobs
-from ai.analyzer import analyze_jobs
-from automation.selenium_bot import run_selenium_demo
-from utils.report import save_report
 
 app = Flask(__name__)
+
+@app.route("/health", methods=["GET"])
+def health():
+    return {"status": "ok", "service": "AI Automation Assistant"}
 
 @app.route("/", methods=["GET", "POST"])
 def index():
@@ -20,8 +20,20 @@ def index():
             message = "Please enter a keyword."
         else:
             try:
+                # Import heavier/optional runtime components only when the
+                # automation request is actually made.
+                from api.api_client import fetch_demo_jobs
+                from ai.analyzer import analyze_jobs
+                from automation.selenium_bot import run_selenium_demo
+                from utils.report import save_report
+
                 jobs = fetch_demo_jobs()
                 analyzed = analyze_jobs(jobs, keyword)
+
+                # Selenium is kept as part of the demo workflow. If the
+                # browser runtime is unavailable on a serverless instance,
+                # the page will show the specific automation error instead
+                # of crashing the entire Flask Function.
                 selenium_result = run_selenium_demo(keyword)
                 report_path = save_report(analyzed, keyword)
 
@@ -35,10 +47,19 @@ def index():
                     "low": sum(1 for x in analyzed if x["match"] == "Low"),
                 }
             except Exception as e:
-                message = f"Automation error: {e}"
+                app.logger.exception("Automation request failed")
+                message = f"Automation error: {type(e).__name__}: {e}"
 
-    return render_template("index.html", results=results, keyword=keyword, message=message)
+    return render_template(
+        "index.html",
+        results=results,
+        keyword=keyword,
+        message=message,
+    )
 
 if __name__ == "__main__":
-    # Local development only. Vercel imports `app` directly.
-    app.run(host="0.0.0.0", port=int(os.getenv("PORT", "5000")), debug=True)
+    app.run(
+        host="0.0.0.0",
+        port=int(os.getenv("PORT", "5000")),
+        debug=True,
+    )
