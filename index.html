@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Automation Assistant</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin:0; font-family:Inter,Arial,sans-serif;
+            background:#f5f7fb; color:#172033;
+        }
+        .hero {
+            background:linear-gradient(135deg,#111827,#334155);
+            color:white; padding:45px 20px;
+        }
+        .container { max-width:1100px; margin:auto; }
+        h1 { margin:0 0 10px; font-size:36px; }
+        .subtitle { color:#cbd5e1; }
+        .card {
+            background:white; border-radius:18px; padding:24px;
+            margin-top:24px; box-shadow:0 8px 30px #0000000d;
+        }
+        form { display:flex; gap:12px; }
+        input {
+            flex:1; padding:14px; border:1px solid #dbe1ea;
+            border-radius:10px; font-size:16px;
+        }
+        button {
+            padding:14px 24px; border:0; border-radius:10px;
+            background:#4f46e5; color:white; font-weight:700; cursor:pointer;
+        }
+        .skills { display:grid; grid-template-columns:repeat(6,1fr); gap:12px; margin-top:22px; }
+        .skill { background:#f8fafc; padding:14px; border-radius:12px; text-align:center; font-size:13px; }
+        .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+        .stat { padding:18px; background:#f8fafc; border-radius:12px; }
+        .stat strong { display:block; font-size:28px; margin-top:6px; }
+        table { width:100%; border-collapse:collapse; margin-top:18px; }
+        th,td { padding:13px; border-bottom:1px solid #edf0f5; text-align:left; }
+        .High { color:#15803d; font-weight:700; }
+        .Medium { color:#b45309; font-weight:700; }
+        .Low { color:#64748b; font-weight:700; }
+        .success { background:#ecfdf5; color:#166534; padding:14px; border-radius:10px; }
+        .error { background:#fef2f2; color:#991b1b; padding:14px; border-radius:10px; }
+        @media(max-width:800px) {
+            .skills,.stats { grid-template-columns:repeat(2,1fr); }
+            form { flex-direction:column; }
+        }
+    </style>
+</head>
+<body>
+<header class="hero">
+<div class="container">
+    <h1>AI Automation Assistant</h1>
+    <div class="subtitle">Python • AI/ML • API Integration • Selenium • Web Automation</div>
+</div>
+</header>
+
+<main class="container">
+<div class="card">
+    <h2>Run Automation</h2>
+    <p>Enter a keyword and run the complete automated pipeline.</p>
+    <form method="POST">
+        <input name="keyword" value="{{ keyword }}" placeholder="e.g. Python Developer" required>
+        <button type="submit">Run Automation</button>
+    </form>
+    <div class="skills">
+        <div class="skill">🐍 Python</div>
+        <div class="skill">🤖 AI / ML</div>
+        <div class="skill">🌐 API</div>
+        <div class="skill">🧪 Selenium</div>
+        <div class="skill">⚙️ Automation</div>
+        <div class="skill">📊 Reports</div>
+    </div>
+</div>
+
+{% if message %}
+<div class="card"><div class="error">{{ message }}</div></div>
+{% endif %}
+
+{% if results %}
+<div class="card">
+    <h2>Automation Completed</h2>
+    <div class="success">✓ API fetched → ✓ AI analyzed → ✓ Selenium automated → ✓ CSV report created</div>
+</div>
+
+<div class="card">
+    <div class="stats">
+        <div class="stat">Total Results<strong>{{ results.total }}</strong></div>
+        <div class="stat">High Match<strong>{{ results.high }}</strong></div>
+        <div class="stat">Medium Match<strong>{{ results.medium }}</strong></div>
+        <div class="stat">Low Match<strong>{{ results.low }}</strong></div>
+    </div>
+</div>
+
+<div class="card">
+    <h2>AI Analysis</h2>
+    <table>
+        <tr><th>Title</th><th>AI Score</th><th>Match</th></tr>
+        {% for job in results.jobs %}
+        <tr>
+            <td>{{ job.title }}</td>
+            <td>{{ job.score }}%</td>
+            <td class="{{ job.match }}">{{ job.match }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+
+<div class="card">
+    <h2>Selenium Result</h2>
+    <p><strong>Status:</strong> {{ results.selenium.status }}</p>
+    <p>{{ results.selenium.action }}</p>
+    <p><strong>{{ results.selenium.result }}</strong></p>
+    <p><strong>Report:</strong> {{ results.report }}</p>
+</div>
+{% endif %}
+</main>
+</body>
+</html>

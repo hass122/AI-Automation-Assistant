@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Selenium Automation Demo</title>
+    <style>
+        body { font-family: Arial; background:#f4f7fb; padding:60px; }
+        .box { max-width:600px; margin:auto; background:white; padding:35px;
+               border-radius:16px; box-shadow:0 10px 30px #0001; }
+        input { width:70%; padding:12px; border:1px solid #ddd; border-radius:8px; }
+        button { padding:12px 18px; border:0; border-radius:8px; cursor:pointer; }
+        #result { margin-top:20px; padding:15px; background:#eef7ff; border-radius:8px; }
+    </style>
+</head>
+<body>
+<div class="box">
+    <h1>Automation Test Page</h1>
+    <p>This local page is controlled automatically by Selenium.</p>
+    <input id="search" placeholder="Enter keyword">
+    <button id="searchBtn" onclick="runSearch()">Search</button>
+    <div id="result">Waiting for automation...</div>
+</div>
+<script>
+function runSearch() {
+    const value = document.getElementById("search").value;
+    document.getElementById("result").innerText =
+        "Selenium successfully searched for: " + value;
+}
+</script>
+</body>
+</html>
